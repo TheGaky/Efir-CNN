@@ -87,7 +87,7 @@ train_dev_sets = ConcatDataset([dataloader_low, dataloader_medium, dataloader_hi
                                 dataloader_off_blur])
 
 
-dataloader = DataLoader(train_dev_sets, batch_size=64)
+dataloader = DataLoader(train_dev_sets, batch_size=64, shuffle=True)
 
 
 class ConvNet(nn.Module):
@@ -125,21 +125,23 @@ loss_function = nn.CrossEntropyLoss()
 optim = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 for epoch in range(epochs):
-    for i in range(number_of_batches):
-        dataloader = iter(dataloader)
-        for x, y in dataloader:
-            x = x.to(device)
-            y = y.to(device)
+    for i, (x, y) in enumerate(dataloader):
+        x = x.to(device)
+        y = y.to(device)
 
-            model.zero_grad()
-            out = model(x)
+        model.zero_grad()
+        out = model(x)
 
-            loss = loss_function(out, y)
-            loss = loss.mean()
-            loss.backward()
-            optim.step()
+        loss = loss_function(out, y)
+        loss = loss.mean()
+        loss.backward()
+        optim.step()
 
-            if i % 5 == 0:
-                cat = torch.argmax(out, dim=1)
-                accuracy = (cat == y).float().mean()
-                print(f'Epoch: {epoch}, Accuracy: {accuracy}')
+        if epoch % 5 == 0:
+            #logic for saving model
+            pass
+
+        if i % 5 == 0:
+            cat = torch.argmax(out, dim=1)
+            accuracy = (cat == y).float().mean()
+            print(f'Epoch: {epoch}, Accuracy: {accuracy}')
