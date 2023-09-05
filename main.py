@@ -17,10 +17,12 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Hyper-parameters
 epochs = 200
 number_of_batches = 16
-learning_rate = 0.001
+learning_rate = 0.01
+
 
 
 # Data preparation
+
 class CustomImageDataset(Dataset):
     def __init__(self, labels_arr, img_dir, transform=None, target_transform=None):
         self.img_labels = pd.DataFrame(labels_arr)
@@ -57,29 +59,33 @@ def create_dataset(folder, label):
     return dataset
 
 
-low = ""
-medium = ""
-high = ""
-off = ""
+low = r"C:\Users\yakovgay\Downloads\gaky_shit\low"
+medium = r"C:\Users\yakovgay\Downloads\gaky_shit\medium"
+high = r"C:\Users\yakovgay\Downloads\gaky_shit\high"
+off = r"C:\Users\yakovgay\Downloads\gaky_shit\off"
 
-low_blur = ""
-medium_blur = ""
-high_blur = ""
-off_blur = ""
+low_blur = r"C:\Users\yakovgay\Downloads\gaky_shit\low blur"
+medium_blur = r"C:\Users\yakovgay\Downloads\gaky_shit\medium blur"
+high_blur = r"C:\Users\yakovgay\Downloads\gaky_shit\high blur"
+off_blur = r"C:\Users\yakovgay\Downloads\gaky_shit\off blur"
 
-dataloader_low = create_dataset("/Users/gaky/Desktop/efir/low", int(0))
-dataloader_medium = create_dataset("/Users/gaky/Desktop/efir/medium", int(1))
-dataloader_high = create_dataset("/Users/gaky/Desktop/efir/high", int(2))
-dataloader_off = create_dataset("/Users/gaky/Desktop/efir/off", int(3))
 
-dataloader_low_blur = create_dataset("/Users/gaky/Desktop/efir/low blur", int(0))
-dataloader_medium_blur = create_dataset("/Users/gaky/Desktop/efir/medium blur", int(1))
-dataloader_high_blur = create_dataset("/Users/gaky/Desktop/efir/high blur", int(2))
-dataloader_off_blur = create_dataset("/Users/gaky/Desktop/efir/off blur", int(3))
+dataloader_low = create_dataset(low, int(0))
+dataloader_medium = create_dataset(medium, int(1))
+dataloader_high = create_dataset(high, int(2))
+dataloader_off = create_dataset(off, int(3))
 
+dataloader_low_blur = create_dataset(low_blur, int(0))
+dataloader_medium_blur = create_dataset(medium_blur, int(1))
+dataloader_high_blur = create_dataset(high_blur, int(2))
+dataloader_off_blur = create_dataset(off_blur, int(3))
+
+
+#currently we have 964 images in dataset
 train_dev_sets = ConcatDataset([dataloader_low, dataloader_medium, dataloader_high,
                                 dataloader_off, dataloader_low_blur, dataloader_medium_blur, dataloader_high_blur,
                                 dataloader_off_blur])
+
 
 dataloader = DataLoader(train_dev_sets, batch_size=64)
 
@@ -120,15 +126,20 @@ optim = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 for epoch in range(epochs):
     for i in range(number_of_batches):
-        model.zero_grad()
-        out = model(x)
+        dataloader = iter(dataloader)
+        for x, y in dataloader:
+            x = x.to(device)
+            y = y.to(device)
 
-        loss = loss_function(out, y)
-        loss = loss.mean()
-        loss.backward()
-        optim.step()
+            model.zero_grad()
+            out = model(x)
 
-        if i % 5 == 0:
-            cat = torch.argmax(out, dim=1)
-            accuracy = (cat == y).float().mean()
-            print(f'Epoch: {epoch}, Accuracy: {accuracy}')
+            loss = loss_function(out, y)
+            loss = loss.mean()
+            loss.backward()
+            optim.step()
+
+            if i % 5 == 0:
+                cat = torch.argmax(out, dim=1)
+                accuracy = (cat == y).float().mean()
+                print(f'Epoch: {epoch}, Accuracy: {accuracy}')
